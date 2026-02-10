@@ -15,6 +15,15 @@ public class Player
         Teammate = teammate;
     }
 
+    public Card GetCard(int index)
+    {
+        if (index >= 0 && index < Hand.Count)
+        {
+            return Hand[index];
+        }
+        return null;
+    }
+
     public void AddCard(Card card)
     {
         if (card != null)

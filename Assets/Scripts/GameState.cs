@@ -61,10 +61,43 @@ public class GameState
 
     public void AddCardToTrick(Card card)
     {
-        if (card != null)
+        CurrentTrick.Add(card);
+        if(CurrentTrick.Count == Players.Count)
         {
-            CurrentTrick.Add(card);
+            EvaluateHand();
         }
+        else
+            MoveToNextPlayer();
+    }
+
+    private void EvaluateHand()
+    {
+        if (CurrentTrick == null || CurrentTrick.Count == 0) return;
+
+        // At this point CurrentPlayerIndex points to the trick leader (see AddCardToTrick flow)
+        int leaderIndex = CurrentPlayerIndex;
+        int winningCardIndex = BelotRules.GetWinningCardIndex(CurrentTrick, CurrentGameMode, TrumpSuit);
+        if (winningCardIndex < 0) return;
+
+        int winnerIndex = (leaderIndex + winningCardIndex) % Players.Count;
+
+        int trickPoints = BelotRules.CalculateTrickPoints(CurrentTrick, CurrentGameMode, TrumpSuit);
+
+        // Teams: players 0 & 2 vs 1 & 3
+        if (winnerIndex % 2 == 0)
+        {
+            TeamScores = (TeamScores.Team1 + trickPoints, TeamScores.Team2);
+        }
+        else
+        {
+            TeamScores = (TeamScores.Team1, TeamScores.Team2 + trickPoints);
+        }
+
+        // Winner leads next trick
+        CurrentPlayerIndex = winnerIndex;
+
+        // clear the trick for next round
+        CurrentTrick.Clear();
     }
 
     public void ClearTrick()

@@ -21,32 +21,32 @@ public class Card
         King,
         Ace
     }
-    
-    public Suit CardSuit { get; private set; }
-    public Rank CardRank { get; private set; }
 
-    public Card(Suit suit, Rank rank)
+    public Suit suit { get; private set; }
+    public Rank rank { get; private set; }
+
+    public Card(Suit s, Rank r)
     {
-        CardSuit = suit;
-        CardRank = rank;
+        suit = s;
+        rank = r;
     }
 
     public override string ToString()
     {
-        return $"{CardRank} of {CardSuit}";
+        return $"{rank} of {suit}";
     }
 
     public override bool Equals(object obj)
     {
         if (obj is Card other)
         {
-            return CardSuit == other.CardSuit && CardRank == other.CardRank;
+            return suit == other.suit && rank == other.rank;
         }
         return false;
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(CardSuit, CardRank);
+        return HashCode.Combine(suit, rank);
     }
 }
