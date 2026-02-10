@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using UnityEngine;
 
 public class GameState
 {
@@ -25,6 +27,7 @@ public class GameState
     public GameMode? CurrentGameMode { get; set; }
     public int CurrentPlayerIndex { get; set; }
     public List<Card> CurrentTrick { get; private set; }
+    public List<Card> PlayedCards { get; private set; }
     public (int Team1, int Team2) TeamScores { get; set; }
     private const int MaxScore = 151;
 
@@ -37,19 +40,20 @@ public class GameState
         CurrentGameMode = null;
         CurrentPlayerIndex = 0;
         CurrentTrick = new List<Card>();
+        PlayedCards = new List<Card>();
         TeamScores = (0, 0);
     }
 
     public void StartNewRound()
-    {
+    { // should keep dealer and player index is set to dealer + 1
         GameDealer.ResetDeck();
         GameDealer.ShuffleDeck();
         GameDealer.DealInitialCards(Players);
         CurrentPhase = GamePhase.Bidding;
-        MoveToNextPlayer();
         TrumpSuit = null;
         CurrentGameMode = null;
         CurrentTrick.Clear();
+        PlayedCards.Clear();
     }
 
     public void SetGameMode(GameMode mode, Card.Suit? suit)
@@ -62,19 +66,22 @@ public class GameState
     public void AddCardToTrick(Card card)
     {
         CurrentTrick.Add(card);
+        PlayedCards.Add(card);
+
         if(CurrentTrick.Count == Players.Count)
         {
             EvaluateHand();
         }
         else
+        {
             MoveToNextPlayer();
+        }
     }
 
     private void EvaluateHand()
     {
         if (CurrentTrick == null || CurrentTrick.Count == 0) return;
 
-        // At this point CurrentPlayerIndex points to the trick leader (see AddCardToTrick flow)
         int leaderIndex = CurrentPlayerIndex;
         int winningCardIndex = BelotRules.GetWinningCardIndex(CurrentTrick, CurrentGameMode, TrumpSuit);
         if (winningCardIndex < 0) return;
@@ -93,15 +100,7 @@ public class GameState
             TeamScores = (TeamScores.Team1, TeamScores.Team2 + trickPoints);
         }
 
-        // Winner leads next trick
         CurrentPlayerIndex = winnerIndex;
-
-        // clear the trick for next round
-        CurrentTrick.Clear();
-    }
-
-    public void ClearTrick()
-    {
         CurrentTrick.Clear();
     }
 
@@ -139,6 +138,7 @@ public class GameState
         TrumpSuit = null;
         CurrentGameMode = null;
         CurrentTrick.Clear();
+        PlayedCards.Clear();
     }
 
     public override string ToString()

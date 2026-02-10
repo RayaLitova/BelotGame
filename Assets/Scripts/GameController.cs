@@ -1,10 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Collections;
 
 public class GameController : MonoBehaviour
 {
     public AnimationController animationController;
     private GameState gameState;
+    
     void Start()
     {
         gameState = new GameState(new List<Player>
@@ -51,5 +53,23 @@ public class GameController : MonoBehaviour
                 animationController.RemoveDisplayedPlayedCard(i);
             }
         }
+        if(gameState.CurrentPlayerIndex != 0)
+        {
+            StartCoroutine(PythonConnector.RequestAction(gameState, gameState.CurrentPlayerIndex, card => {
+                PlayCard(card);
+            }));
+        }
+    }
+
+    public void PlayCard(Card card)
+    {
+        Player player = gameState.GetCurrentPlayer();
+        int position = player.Hand.IndexOf(card);
+        if (position < 0)
+        {
+            Debug.LogError($"Card {card} not found in player {gameState.CurrentPlayerIndex}'s hand");
+            return;
+        }
+        PlayCard(position);
     }
 }
