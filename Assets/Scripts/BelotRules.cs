@@ -140,9 +140,6 @@ public static class BelotRules
         return bestIndex2 >= 0 ? bestIndex2 : 0;
     }
 
-    // Returns legal plays for a player given current state and current trick
-    // Simplified rules: must follow suit if possible; if cannot follow suit and there is at least one trump in trick,
-    // and player has trumps, must play a higher trump if possible, otherwise any trump; else free play.
     public static List<Card> GetLegalPlays(GameState state, Player player)
     {
         var hand = player.Hand;
@@ -150,34 +147,42 @@ public static class BelotRules
 
         if (state.CurrentTrick == null || state.CurrentTrick.Count == 0)
         {
-            // any card may be led
             return new List<Card>(hand);
         }
+        GameState.GameMode? mode = state.CurrentGameMode;
+        Card.Suit? trumpSuit = state.TrumpSuit;
+        if (mode == null) return new List<Card>();
 
         Card.Suit leadSuit = state.CurrentTrick[0].suit;
+        
         var followSuitCards = hand.Where(c => c.suit == leadSuit).ToList();
-        if (followSuitCards.Count > 0)
-            return followSuitCards;
-
-        // cannot follow suit
-        // if there is a trump in the trick and player has trumps, must overtrump if possible
-        var trumpsInTrick = state.CurrentTrick.Where(c => state.CurrentGameMode == GameState.GameMode.AllTrumps || (state.CurrentGameMode == GameState.GameMode.Suit && state.TrumpSuit.HasValue && c.suit == state.TrumpSuit.Value)).ToList();
-        var playerTrumps = (state.CurrentGameMode == GameState.GameMode.AllTrumps)
-            ? new List<Card>(hand)
-            : (state.TrumpSuit.HasValue ? hand.Where(c => c.suit == state.TrumpSuit.Value).ToList() : new List<Card>());
-
-        if (trumpsInTrick.Count > 0 && playerTrumps.Count > 0)
+        if (followSuitCards != null && followSuitCards.Count > 0)
         {
-            // find highest trump in trick
-            int highestTrumpStrength = trumpsInTrick.Max(c => TrumpStrength[c.rank]);
-            var overtrumps = playerTrumps.Where(c => TrumpStrength[c.rank] > highestTrumpStrength).ToList();
-            if (overtrumps.Count > 0)
-                return overtrumps;
-            // otherwise must play a trump
-            return playerTrumps;
+            if(mode == GameState.GameMode.AllTrumps || (trumpSuit == leadSuit))
+            {
+                var trumpsInTrick = state.CurrentTrick.Where(c => leadSuit == c.suit).ToList();
+                var highestTrumpInTrick = trumpsInTrick.Max(c => TrumpStrength[c.rank]);
+                var higherfollowSuitCards = followSuitCards.Where(c => TrumpStrength[c.rank] > highestTrumpInTrick).ToList();
+                if (higherfollowSuitCards != null && higherfollowSuitCards.Count > 0)
+                    return higherfollowSuitCards;
+            }
+            return followSuitCards;
         }
 
-        // otherwise free to play any card
+        if(trumpSuit.HasValue)
+        {
+            var trumpsInTrick = state.CurrentTrick.Where(c => trumpSuit == c.suit).ToList();
+            var trickStarterIndex = (state.Players.Count - state.CurrentTrick.Count + state.CurrentPlayerIndex) % state.Players.Count;
+            var winnerIndex = trickStarterIndex + GetWinningCardIndex(state.CurrentTrick, mode, trumpSuit);
+            if((trumpsInTrick.Count > 0 || winnerIndex % 2 != state.CurrentPlayerIndex % 2) && !(trumpsInTrick.Count > 0 && winnerIndex % 2 == state.CurrentPlayerIndex % 2))
+            {
+                var highestTrumpInTrick = trumpsInTrick.Count > 0 ? trumpsInTrick.Max(c => TrumpStrength[c.rank]) : -1;
+                var playerTrumps = hand.Where(c => c.suit == trumpSuit && TrumpPoints[c.rank] > highestTrumpInTrick).ToList();
+                if (playerTrumps.Count > 0)
+                    return playerTrumps;
+            }
+        }
+
         return new List<Card>(hand);
     }
 }

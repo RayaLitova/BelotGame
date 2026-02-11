@@ -46,6 +46,7 @@ public class GameState
         CurrentTrick = new List<Card>();
         PlayedCards = new List<Card>();
         TeamScores = (0, 0);
+        TrickNumber = 0;
     }
 
     public void StartNewRound()
@@ -60,6 +61,7 @@ public class GameState
         PlayedCards.Clear();
         DealerIndex = (DealerIndex + 1) % Players.Count;
         CurrentPlayerIndex = (DealerIndex + 1) % Players.Count;
+        TrickNumber = 0;
     }
 
     public void SetGameMode(GameMode mode, Card.Suit? suit)
@@ -78,6 +80,8 @@ public class GameState
         if(CurrentTrick.Count == Players.Count)
         {
             EvaluateHand();
+            if(TrickNumber >= 8)
+                StartNewRound();
         }
         else
         {

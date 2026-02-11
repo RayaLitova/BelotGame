@@ -41,7 +41,7 @@ public class GameController : MonoBehaviour
         if (card == null || !legalPlays.Contains(card))
         {
             Debug.LogWarning("Illegal card play!" + card);
-            position = player.Hand.IndexOf(legalPlays[0]); // fallback
+            return;
         }
         Card removed = player.PlayCard(position);
         AnnounceManager.Announce? beloteAnnounce = AnnounceManager.HandleBelote(player.Hand, removed, gameState.CurrentPlayerIndex, gameState.CurrentGameMode, gameState.TrumpSuit);
@@ -67,6 +67,11 @@ public class GameController : MonoBehaviour
                 StartCoroutine(RemoveDisplayedPlayedCardDelayed(i));
             }
         }
+        if(gameState.TrickNumber == 0 && gameState.CurrentTrick.Count == 0)
+        {
+            animationController.DisplayAllCards(gameState.Players);
+        }
+
         if(gameState.CurrentPlayerIndex != 0)
         {
             StartCoroutine(RequestActionDelayed());
