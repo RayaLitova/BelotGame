@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class GameState
@@ -30,6 +31,8 @@ public class GameState
     public List<Card> CurrentTrick { get; private set; }
     public List<Card> PlayedCards { get; private set; }
     public (int Team1, int Team2) TeamScores { get; set; }
+    public int TrickNumber { get; set; }
+    private int DealerIndex = 2;
     private const int MaxScore = 151;
 
     public GameState(List<Player> players)
@@ -46,7 +49,7 @@ public class GameState
     }
 
     public void StartNewRound()
-    { // should keep dealer and player index is set to dealer + 1
+    {
         GameDealer.ResetDeck();
         GameDealer.ShuffleDeck();
         GameDealer.DealInitialCards(Players);
@@ -55,6 +58,8 @@ public class GameState
         CurrentGameMode = null;
         CurrentTrick.Clear();
         PlayedCards.Clear();
+        DealerIndex = (DealerIndex + 1) % Players.Count;
+        CurrentPlayerIndex = (DealerIndex + 1) % Players.Count;
     }
 
     public void SetGameMode(GameMode mode, Card.Suit? suit)
@@ -83,27 +88,31 @@ public class GameState
     private void EvaluateHand()
     {
         if (CurrentTrick == null || CurrentTrick.Count == 0) return;
-
-        int leaderIndex = CurrentPlayerIndex;
         int winningCardIndex = BelotRules.GetWinningCardIndex(CurrentTrick, CurrentGameMode, TrumpSuit);
         if (winningCardIndex < 0) return;
+        int trickStarter = (CurrentPlayerIndex + 1) % Players.Count;
+        UnityEngine.Debug.Log($"Trick started by player {trickStarter} CurrentplayerIndex: {CurrentPlayerIndex} CurrentTrick count: {CurrentTrick.Count}");
 
-        int winnerIndex = (leaderIndex + winningCardIndex) % Players.Count;
-
+        int winnerIndex = (trickStarter + winningCardIndex) % Players.Count;
+        UnityEngine.Debug.Log($"Trick won by player {winnerIndex} with card {CurrentTrick[winningCardIndex]}");
         int trickPoints = BelotRules.CalculateTrickPoints(CurrentTrick, CurrentGameMode, TrumpSuit);
+        AddPoints(trickPoints, winnerIndex);
+        
+        CurrentPlayerIndex = winnerIndex;
+        TrickNumber++;
+        CurrentTrick.Clear();
+    }
 
-        // Teams: players 0 & 2 vs 1 & 3
-        if (winnerIndex % 2 == 0)
+    public void AddPoints(int points, int player_index)
+    {
+        if (player_index % 2 == 0)
         {
-            TeamScores = (TeamScores.Team1 + trickPoints, TeamScores.Team2);
+            TeamScores = (TeamScores.Team1 + points, TeamScores.Team2);
         }
         else
         {
-            TeamScores = (TeamScores.Team1, TeamScores.Team2 + trickPoints);
+            TeamScores = (TeamScores.Team1, TeamScores.Team2 + points);
         }
-
-        CurrentPlayerIndex = winnerIndex;
-        CurrentTrick.Clear();
     }
 
     public Player GetCurrentPlayer()

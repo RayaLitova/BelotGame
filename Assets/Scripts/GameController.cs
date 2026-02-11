@@ -1,3 +1,4 @@
+#nullable enable
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
@@ -26,14 +27,29 @@ public class GameController : MonoBehaviour
     public void PlayCard(int position)
     {
         Player player = gameState.GetCurrentPlayer();
+        if(gameState.TrickNumber == 0)
+        {
+            List<AnnounceManager.Announce> announces = AnnounceManager.GetAnnouncesFromHand(player.Hand, gameState.CurrentPlayerIndex);
+            foreach(var announce in announces)
+            {
+                gameState.AddPoints(announce.Points, gameState.CurrentPlayerIndex);
+                animationController.DisplayAnnounce(announce, gameState.CurrentPlayerIndex);
+            }
+        }
         List<Card> legalPlays = BelotRules.GetLegalPlays(gameState, player);
         Card card = player.GetCard(position);
         if (card == null || !legalPlays.Contains(card))
         {
-            Debug.LogWarning("Illegal card play!");
-            return;
+            Debug.LogWarning("Illegal card play!" + card);
+            position = player.Hand.IndexOf(legalPlays[0]); // fallback
         }
         Card removed = player.PlayCard(position);
+        AnnounceManager.Announce? beloteAnnounce = AnnounceManager.HandleBelote(player.Hand, removed, gameState.CurrentPlayerIndex, gameState.CurrentGameMode, gameState.TrumpSuit);
+        if (beloteAnnounce != null)
+        {
+            gameState.AddPoints(beloteAnnounce.Points, gameState.CurrentPlayerIndex);
+            animationController.DisplayAnnounce(beloteAnnounce, gameState.CurrentPlayerIndex);
+        }
         if (removed == null)
         {
             Debug.LogError($"Failed to remove card at position {position} from player {gameState.CurrentPlayerIndex}");
@@ -41,7 +57,7 @@ public class GameController : MonoBehaviour
         }
 
         animationController.DisplayPlayedCard(removed, gameState.CurrentPlayerIndex);
-        animationController.RemoveDisplayedCard(position, gameState.CurrentPlayerIndex);
+        animationController.RemoveDisplayedCard(position, gameState.CurrentPlayerIndex, player.Hand.Count);
         gameState.AddCardToTrick(removed);
         animationController.MoveTurnIndicator(gameState.CurrentPlayerIndex);
         if (gameState.CurrentTrick.Count == 0)

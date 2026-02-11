@@ -80,18 +80,18 @@ public static class BelotRules
         return trick.Sum(c => GetCardPoints(c, mode, trump));
     }
 
-    // Returns index in the trick list of the winning card
     public static int GetWinningCardIndex(List<Card> trick, GameState.GameMode? mode, Card.Suit? trump)
     {
         if (trick == null || trick.Count == 0) return -1;
 
+        Card.Suit leadSuit = trick[0].suit;
         if (mode == GameState.GameMode.AllTrumps)
         {
-            // Treat every card as trump
             int bestIndex = 0;
             int bestStrength = TrumpStrength[trick[0].rank];
             for (int i = 1; i < trick.Count; i++)
             {
+                if (trick[i].suit != leadSuit) continue;
                 int s = TrumpStrength[trick[i].rank];
                 if (s > bestStrength)
                 {
@@ -102,9 +102,6 @@ public static class BelotRules
             return bestIndex;
         }
 
-        Card.Suit leadSuit = trick[0].suit;
-
-        // If a trump is present (when mode is Suit), highest trump wins
         if (mode == GameState.GameMode.Suit && trump.HasValue)
         {
             int bestTrumpIndex = -1;
