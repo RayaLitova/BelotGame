@@ -15,7 +15,6 @@ public class AnimationController : MonoBehaviour
     public void DisplayAllCards(List<Player> players)
     {
         if (cardsContainer == null) return;
-        Debug.Log($"Displaying cards for {players.Count} players.");
         for (int i = 0; i < players.Count; i++)
         {
             Player player = players[i];
@@ -29,7 +28,6 @@ public class AnimationController : MonoBehaviour
     public void DisplayCard(Card? card, int position, int player_idx)
     {
         if (cardsContainer == null) return;
-        Debug.Log($"Displaying card for player {player_idx} at position {position}: {(card == null ? "null" : $"{card.suit} {card.rank}")}");
         string cardImagePath = card == null 
             ? "CardSet/Blue-Cover"
             : $"CardSet/{card.suit}/{card.rank}-{card.suit}";
@@ -44,7 +42,6 @@ public class AnimationController : MonoBehaviour
         }
         if (cardContainer.TryGetComponent<Image>(out var cardImage))
         {
-            Debug.Log($"Loading card image from path: {cardImagePath}");
             cardImage.sprite = sprite;
         }
     }

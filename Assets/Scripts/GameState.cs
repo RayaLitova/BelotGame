@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -61,6 +62,8 @@ public class GameState
         CurrentGameMode = mode;
         TrumpSuit = suit;
         CurrentPhase = GamePhase.Playing;
+        GameDealer.DealSecondRoundCards(Players);
+        UnityEngine.Debug.Log($"Game mode set to {mode} with trump suit {suit}");
     }
 
     public void AddCardToTrick(Card card)

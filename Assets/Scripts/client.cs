@@ -90,7 +90,6 @@ public static class PythonConnector
             if (request.result == UnityWebRequest.Result.Success)
             {
                 ResponseData response = JsonUtility.FromJson<ResponseData>(request.downloadHandler.text);
-                Debug.Log($"Received: {response}");
                 onCardReceived?.Invoke(new Card((Card.Suit)response.suit, (Card.Rank)response.rank));
             }
             else
