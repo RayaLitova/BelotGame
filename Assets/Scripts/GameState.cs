@@ -63,7 +63,6 @@ public class GameState
         TrumpSuit = suit;
         CurrentPhase = GamePhase.Playing;
         GameDealer.DealSecondRoundCards(Players);
-        UnityEngine.Debug.Log($"Game mode set to {mode} with trump suit {suit}");
     }
 
     public void AddCardToTrick(Card card)

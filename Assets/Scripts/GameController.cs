@@ -43,6 +43,7 @@ public class GameController : MonoBehaviour
         animationController.DisplayPlayedCard(removed, gameState.CurrentPlayerIndex);
         animationController.RemoveDisplayedCard(position, gameState.CurrentPlayerIndex);
         gameState.AddCardToTrick(removed);
+        animationController.MoveTurnIndicator(gameState.CurrentPlayerIndex);
         if (gameState.CurrentTrick.Count == 0)
         {
             for (int i = 0; i < gameState.Players.Count; i++)

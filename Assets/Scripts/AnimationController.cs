@@ -3,14 +3,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.UI;
+using Unity.VisualScripting;
 
 #nullable enable
 
 public class AnimationController : MonoBehaviour
 {
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    public Transform? cardsContainer;
-    public Transform? playerCardsContainer;
+    public Transform cardsContainer;
+    public Transform playedCardsContainer;
+    public Transform turnIndicatorContainer;
 
     public void DisplayAllCards(List<Player> players)
     {
@@ -20,7 +22,12 @@ public class AnimationController : MonoBehaviour
             Player player = players[i];
             for (int j = 0; j < player.Hand.Count; j++)
             {
-                DisplayCard(player.Hand[j], j, i);
+                DisplayCard(i==0 ? player.Hand[j] : null, j, i);
+            }
+            Transform playerContainer = cardsContainer.GetChild(i);
+            for (int j = player.Hand.Count; j < 8; j++)
+            {
+                playerContainer.GetChild(j).gameObject.SetActive(false);
             }
         }
     }
@@ -34,6 +41,7 @@ public class AnimationController : MonoBehaviour
 
         Transform playerContainer = cardsContainer.GetChild(player_idx);
         Transform cardContainer = playerContainer.GetChild(position);
+        cardContainer.gameObject.SetActive(true);
         Sprite sprite = Resources.Load<Sprite>(cardImagePath);
         if (sprite == null)
         {
@@ -53,7 +61,7 @@ public class AnimationController : MonoBehaviour
         Transform cardContainer = playerContainer.GetChild(position);
         if (cardContainer.TryGetComponent<Image>(out var cardImage))
         {
-            cardImage.sprite = null; // Clear the sprite to indicate the card has been played
+            cardImage.sprite = null;
         }
         RepositionCards(position, player_idx);
     }
@@ -76,23 +84,25 @@ public class AnimationController : MonoBehaviour
         if (lastCard.TryGetComponent<Image>(out var lastImage))
         {
             lastImage.sprite = null;
+            lastCard.gameObject.SetActive(false);
         }
     }
 
     public void RemoveDisplayedPlayedCard(int player_idx)
     {
-        if (playerCardsContainer == null) return;
-        Transform cardContainer = playerCardsContainer.GetChild(player_idx);
+        if (playedCardsContainer == null) return;
+        Transform cardContainer = playedCardsContainer.GetChild(player_idx);
         if (cardContainer.TryGetComponent<Image>(out var cardImage))
         {
+            cardContainer.gameObject.SetActive(false);
             cardImage.sprite = null;
         }
     }
 
     public void DisplayPlayedCard(Card card, int player_idx)
     {
-        if(playerCardsContainer == null) return;
-        Transform cardContainer = playerCardsContainer.GetChild(player_idx);
+        if(playedCardsContainer == null) return;
+        Transform cardContainer = playedCardsContainer.GetChild(player_idx);
         Sprite sprite = Resources.Load<Sprite>($"CardSet/{card.suit}/{card.rank}-{card.suit}");
         if (sprite == null)
         {
@@ -101,8 +111,15 @@ public class AnimationController : MonoBehaviour
         }
         if (cardContainer.TryGetComponent<Image>(out var cardImage))
         {
+            cardContainer.gameObject.SetActive(true);
             cardImage.sprite = sprite;
         }
+    }
+
+    public void MoveTurnIndicator(int player_idx)
+    {
+        turnIndicatorContainer.GetChild(player_idx).gameObject.SetActive(true);
+        turnIndicatorContainer.GetChild(player_idx - 1 >= 0 ? player_idx - 1 : 4).gameObject.SetActive(false);
     }
 
 }
